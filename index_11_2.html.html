@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alien King — Cinematic Journey</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --green: #4ADE80; --green-dark: #2D6A4F;
+  --purple: #6c268c; --purple-dark: #3d1163;
+  --neon-green: #39ff14; --cyan: #55efc4;
+  --holo: #00e5ff; --red: #ff2244; --gold: #ffd700;
+}
+body { background:#000; overflow:hidden; font-family:'Orbitron',monospace; width:100vw; height:100vh; color:#fff; }
+#app { position:relative; width:100vw; height:100vh; overflow:hidden; }
+
+/* ─── BUBBLES ─── */
+.bubble {
+  position:absolute; background:rgba(255,255,255,0.97); color:#111;
+  font-family:'Orbitron',sans-serif; font-size:0.85rem; font-weight:700;
+  padding:12px 18px; border-radius:18px; line-height:1.6; white-space:nowrap;
+  box-shadow:0 6px 24px rgba(0,0,0,0.25); transform-origin:bottom center;
+  z-index:30; pointer-events:none; opacity:0; transition: opacity 0.3s;
+}
+.bubble.active { animation:bubbleBounce 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.bubble::after { content:''; position:absolute; bottom:-12px; left:50%; transform:translateX(-50%); border:7px solid transparent; border-top-color:rgba(255,255,255,0.97); }
+
+.watch-bubble {
+  background: rgba(0, 15, 30, 0.85);
+  color: var(--holo);
+  border: 1px solid var(--holo);
+  font-family: 'Share Tech Mono', monospace;
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+  backdrop-filter: blur(4px);
+  font-size: 0.8rem;
+}
+.watch-bubble::after { border-top-color: var(--holo); }
+
+@keyframes bubbleBounce { from{transform:scale(0) translateY(10px);opacity:0} to{transform:scale(1) translateY(0);opacity:1} }
+
+/* ─── SHARED SCENE BASE ─── */
+.scene { position:absolute; inset:0; opacity:0; pointer-events:none; transition:opacity 0.8s; }
+.scene.active { opacity:1; pointer-events:all; }
+
+/* ─── SVG ANIMATIONS ─── */
+.ufo-final { animation: float-final 5s ease-in-out infinite; }
+@keyframes float-final { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+.eyes-anim { transform-origin: 100px 115px; animation: blink 6s infinite; }
+@keyframes blink { 0%, 94%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
+.strobe { animation: strobeAnim 1.5s infinite alternate; }
+@keyframes strobeAnim { 0% { opacity: 0.4; } 100% { opacity: 1; } }
+
+.ufo-rear-final { animation: hover-rear 5s ease-in-out infinite; }
+@keyframes hover-rear { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.engine-strobe { animation: engineFlash 1.5s infinite alternate; }
+@keyframes engineFlash { from { opacity: 0.3; } to { opacity: 1; } }
+.exhaust-pulse { animation: exhaustPulse 2s infinite alternate; }
+@keyframes exhaustPulse { from { transform: scale(0.9); opacity: 0.2; } to { transform: scale(1.1); opacity: 0.5; } }
+.antennae-sway { animation: sway 4s ease-in-out infinite; transform-origin: bottom; }
+@keyframes sway { 0%, 100% { transform: rotate(-1deg); } 50% { transform: rotate(1deg); } }
+
+circle.blue-core { animation: pulseBlueCore 4s ease-in-out infinite; }
+@keyframes pulseBlueCore { 0%, 100% { filter: blur(1.5px) brightness(1); } 50% { filter: blur(2.5px) brightness(1.6); } }
+
+/* ─── SCENE LAYOUTS ─── */
+#s1 { background:radial-gradient(ellipse at center,#1a0035 0%,#0a0018 55%,#000 100%); display:flex; align-items:center; justify-content:center; }
+.stars-bg { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+.star-dot { position:absolute; border-radius:50%; background:#fff; animation:starPulse ease-in-out infinite; }
+@keyframes starPulse { 0%,100%{opacity:0.15;transform:scale(1)} 50%{opacity:0.9;transform:scale(1.5)} }
+#s1-ufo { width:min(420px,80vw); position:relative; }
+#s1-bubble { top:-20px; left:50%; margin-left:-130px; width:260px; text-align:center; }
+
+#s2 { background:#000; display:flex; align-items:center; justify-content:center; }
+.warp-line { position:absolute; height:2px; background:linear-gradient(to right,transparent,#fff,transparent); transform-origin:center center; animation:warpStretch 0.5s ease-out forwards; }
+@keyframes warpStretch { from{width:2px;opacity:1} to{width:300px;opacity:0} }
+#s2-ufo { width:min(380px,75vw); animation:rearBack 0.5s ease-in-out forwards; filter:drop-shadow(0 0 25px rgba(85,239,196,0.5)); }
+@keyframes rearBack { 0%{transform:scale(1) rotate(0)} 40%{transform:scale(0.9) rotate(-5deg)} 100%{transform:scale(1.15) rotate(0)} }
+#warp-flash { position:absolute; inset:0; background:#fff; opacity:0; z-index:50; pointer-events:none; transition:opacity 0.25s; }
+#warp-flash.on { opacity:1; }
+
+#s3 { background:radial-gradient(ellipse at 60% 50%,#040d30 0%,#010510 70%,#000 100%); display:flex; align-items:center; justify-content:space-around; padding:0 6vw; }
+#s3-ufo-wrap { position:relative; width:min(320px,45vw); z-index:10; }
+
+#s3-bubble, #s3-bubble2 { 
+  top: -100px; 
+  left: 0; 
+  right: 0; 
+  margin: 0 auto; 
+  width: max-content; 
+  text-align: center; 
+}
+
+.earth-wrap { position:relative; z-index:10; }
+.scan-beam { position:absolute; left:0; right:0; top:0; height:60px; background:linear-gradient(to bottom,rgba(74,222,128,0),rgba(74,222,128,0.35) 50%,rgba(74,222,128,0)); filter:blur(5px); animation:scanDown 3.5s 0.5s linear forwards; pointer-events:none; z-index:5; }
+@keyframes scanDown { from{top:0} to{top:calc(100% - 60px)} }
+
+/* Holographic India Map overlay */
+#india-hologram {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 85%;
+  height: 85%;
+  transform: translate(-50%, -50%) scale(0.6);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 10;
+  transition: all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+#india-hologram.active {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.hacker-text { position:absolute; bottom:10px; right:-10px; font-family:'Share Tech Mono',monospace; font-size:0.6rem; color:var(--green); line-height:1.8; text-shadow:0 0 8px var(--green); opacity:0; animation:fadeInHack 0.5s 1s ease forwards; z-index: 15; }
+@keyframes fadeInHack { from{opacity:0} to{opacity:1} }
+.hacker-text span { display:block; animation:glitchChar 0.1s step-end infinite alternate; }
+@keyframes glitchChar { 0%{opacity:1} 50%{opacity:0.6} 100%{opacity:1} }
+
+#s4 { display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.landmark-carousel { position:absolute; inset:0; display:flex; width:400%; height:100%; transition:transform 1.5s cubic-bezier(0.86,0,0.07,1); }
+.lm-slide { flex:0 0 25%; display:flex; align-items:flex-end; justify-content:center; position:relative; overflow:hidden; padding-bottom:40px; }
+.lm-slide:nth-child(1) { background:radial-gradient(ellipse at 50% 80%,#ff6b35 0%,#c0392b 40%,#1a0a00 100%); }
+.lm-slide:nth-child(2) { background:radial-gradient(ellipse at 50% 80%,#0097d6 0%,#1565c0 50%,#000d2e 100%); }
+.lm-slide:nth-child(3) { background:radial-gradient(ellipse at 50% 80%,#ffd700 0%,#c97a00 40%,#1a0e00 100%); }
+.lm-slide:nth-child(4) { background:radial-gradient(ellipse at 50% 80%,#8e24aa 0%,#4a148c 50%,#0d001a 100%); }
+.lm-label { position:absolute; top:30px; left:50%; transform:translateX(-50%); font-size:0.95rem; font-weight: bold; letter-spacing:6px; color:rgba(255,255,255,0.95); font-family:'Share Tech Mono',monospace; background: rgba(0, 0, 0, 0.4); padding: 8px 20px; border-radius: 8px; text-shadow: 0 4px 10px rgba(0,0,0,0.9); z-index:20;}
+
+.landmark-svg { 
+  width: min(360px, 75vw); 
+  height: 40vh; 
+  animation: lmScale 6s ease-in-out infinite alternate; 
+  transform-origin: bottom center; 
+  filter: drop-shadow(0 15px 25px rgba(0,0,0,0.6));
+}
+@keyframes lmScale { from{transform:scale(1)} to{transform:scale(1.05)} }
+
+/* UFO and Scanning Beam container */
+#s4-ufo-container { 
+  position:absolute; 
+  top:10%; 
+  left:50%; 
+  transform:translateX(-50%); 
+  z-index:10; 
+  animation:s4float 2.5s ease-in-out infinite,s4steer 6s ease-in-out infinite; 
+}
+#s4-ufo { width:min(220px,40vw); filter:drop-shadow(0 0 25px rgba(85,239,196,0.4)); }
+
+/* Glowing Abduction/Scanner Beam */
+.abduction-beam {
+  position: absolute;
+  top: 55%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150px;
+  height: 45vh;
+  background: linear-gradient(to bottom, rgba(85,239,196,0.6) 0%, rgba(85,239,196,0) 100%);
+  clip-path: polygon(30% 0, 70% 0, 100% 100%, 0% 100%);
+  z-index: -1;
+  animation: beamPulse 1.5s infinite alternate;
+}
+@keyframes beamPulse { from{opacity:0.3} to{opacity:0.7} }
+@keyframes s4float { 0%,100%{margin-top:0} 50%{margin-top:-10px} }
+@keyframes s4steer { 0%,100%{transform:translateX(-50%) rotate(0)} 25%{transform:translateX(-50%) rotate(-6deg)} 75%{transform:translateX(-50%) rotate(6deg)} }
+
+#s5 { background:#000; display:flex; align-items:center; justify-content:center; }
+#s5.shake { animation:windowShake 0.08s ease-in-out infinite; }
+@keyframes windowShake { 0%{transform:translate(0,0) rotate(0)} 20%{transform:translate(-6px,4px) rotate(-0.5deg)} 40%{transform:translate(6px,-4px) rotate(0.5deg)} 60%{transform:translate(-4px,6px) rotate(-0.3deg)} 80%{transform:translate(4px,-6px) rotate(0.3deg)} 100%{transform:translate(0,0) rotate(0)} }
+.red-border-flash { position:absolute; inset:0; z-index:20; pointer-events:none; border:6px solid var(--red); box-shadow:inset 0 0 40px rgba(255,34,68,0.5); animation:borderBlink 0.4s ease-in-out infinite; }
+@keyframes borderBlink { 0%,100%{opacity:1} 50%{opacity:0.1} }
+.overload-text { position:absolute; top:28%; left:50%; transform:translateX(-50%); font-size:clamp(1.6rem,5vw,3.5rem); font-weight:900; letter-spacing:6px; color:var(--red); text-shadow:0 0 30px var(--red); z-index:25; animation:glitchText 0.15s step-end infinite; white-space:nowrap; }
+@keyframes glitchText { 0%{transform:translateX(-50%) skewX(0)} 20%{transform:translateX(calc(-50% + 4px)) skewX(-3deg);color:#fff} 40%{transform:translateX(calc(-50% - 4px)) skewX(3deg)} 60%{transform:translateX(-50%) skewX(0);color:var(--red)} 80%{transform:translateX(calc(-50% + 2px)) skewX(-2deg)} 100%{transform:translateX(-50%) skewX(0)} }
+.smoke-cloud { position:absolute; border-radius:50%; background:radial-gradient(circle,rgba(90,90,90,0.9) 0%,rgba(40,40,40,0.6) 60%,transparent 100%); animation:smokeRise ease-out forwards; z-index:15; pointer-events:none; }
+@keyframes smokeRise { 0%{transform:scale(0.3) translateY(0);opacity:0.9} 100%{transform:scale(3) translateY(-120px);opacity:0} }
+#s5-ufo { width:min(320px,60vw); filter:drop-shadow(0 0 20px rgba(255,34,68,0.8)); }
+@keyframes s5shake { 0%{transform:translate(0,0) rotate(0)} 20%{transform:translate(-8px,5px) rotate(-2deg)} 40%{transform:translate(8px,-5px) rotate(2deg)} 60%{transform:translate(-5px,8px) rotate(-1.5deg)} 80%{transform:translate(5px,-8px) rotate(1.5deg)} 100%{transform:translate(0,0) rotate(0)} }
+
+/* Scream Bubble for Scene 5 Overload */
+.scream-bubble {
+  position: absolute;
+  bottom: 25%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.97);
+  color: #000;
+  padding: 12px 24px;
+  border-radius: 18px;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 1.1rem;
+  box-shadow: 0 0 20px rgba(255,34,68,0.6);
+  white-space: nowrap;
+  z-index: 30;
+  animation: bubbleShake 0.1s infinite;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.scream-bubble.active { opacity: 1; }
+.scream-bubble::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 0 10px 10px 10px;
+  border-style: solid;
+  border-color: transparent transparent rgba(255,255,255,0.97) transparent;
+}
+@keyframes bubbleShake {
+  0% { transform: translateX(calc(-50% - 3px)) translateY(2px); }
+  50% { transform: translateX(calc(-50% + 3px)) translateY(-2px); }
+  100% { transform: translateX(calc(-50% - 3px)) translateY(2px); }
+}
+
+#s6 { background:linear-gradient(to bottom, #050a1f 0%, #150a2e 60%, #000 100%); display:flex; flex-direction:column; align-items:center; justify-content:flex-end; }
+.city-skyline { position: absolute; bottom: 110px; left: 0; width: 100%; height: 150px; opacity: 0.5; z-index: 1; pointer-events: none;}
+.ground-layer { position:absolute; bottom:0; left:0; right:0; height:110px; background:linear-gradient(to top,#0a0510,#1a0d2a 50%,transparent); border-top: 2px solid #331a4d; z-index: 2;}
+.debris-piece { position:absolute; bottom:80px; height:12px; border-radius:4px; background:linear-gradient(135deg,#8090b8,#3d4a6a); box-shadow:0 3px 10px rgba(0,0,0,0.5); transform:rotate(var(--r)); z-index: 3;}
+#alien-king-final { position:relative; z-index:10; margin-bottom:70px; width:180px; height:auto; filter:drop-shadow(0 0 10px rgba(74,222,128,0.2)); animation:crashRise 1.2s 0.3s cubic-bezier(0.34,1.2,0.64,1) both; }
+@keyframes crashRise { from{transform:translateY(80px) rotate(-18deg);opacity:0} to{transform:translateY(0) rotate(0);opacity:1} }
+
+/* Dialogue positions */
+#s6-dialogue-container { position: absolute; inset: 0; pointer-events: none; z-index: 20; }
+.s6-alien-talk { 
+  bottom: 370px; 
+  left: 0; 
+  right: 0; 
+  margin: 0 auto; 
+  width: max-content; 
+  text-align: center; 
+}
+.s6-watch-talk { 
+  bottom: 155px; 
+  left: calc(50% + 90px); 
+  transform: none; 
+  text-align: left; 
+}
+.s6-watch-talk::after { 
+  left: -14px; 
+  top: 50%; 
+  bottom: auto; 
+  margin-top: -7px;
+  border-color: transparent var(--holo) transparent transparent !important; 
+  border-width: 7px 14px 7px 0 !important; 
+}
+
+#s7 { background:linear-gradient(160deg,#05050f 0%,#0d0028 50%,#020210 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; }
+#s7::after { content:''; position:absolute; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.12) 3px,rgba(0,0,0,0.12) 4px); pointer-events:none; }
+.nav-stars-bg { position:absolute; inset:0; overflow:hidden; }
+.nav-star { position:absolute; background:#fff; border-radius:50%; animation:twinkle ease-in-out infinite; }
+@keyframes twinkle { 0%,100%{opacity:0.15;transform:scale(1)} 50%{opacity:1;transform:scale(1.4)} }
+.nav-logo { font-size:clamp(1.8rem,4vw,3rem); font-weight:900; letter-spacing:8px; color:var(--neon-green); text-shadow:0 0 30px rgba(57,255,20,0.5); margin-bottom:10px; position:relative; z-index:1; animation:fadeUp 1s 0.3s both; }
+.nav-tagline { font-family:'Share Tech Mono',monospace; color:rgba(0,229,255,0.55); font-size:0.75rem; letter-spacing:5px; margin-bottom:50px; position:relative; z-index:1; animation:fadeUp 1s 0.6s both; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:translateY(0)} }
+.nav-mascot { position:relative; z-index:1; margin-bottom:28px; width:90px; animation:fadeUp 1s 0.1s both,mascotFloat 3s 1s ease-in-out infinite; filter:drop-shadow(0 0 18px rgba(74,222,128,0.4)); }
+@keyframes mascotFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+
+nav { display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:60px; padding:10px 18px; backdrop-filter:blur(20px); box-shadow:0 8px 60px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.04); position:relative; z-index:1; animation:fadeUp 1s 0.9s both; }
+.nav-link { font-family:'Orbitron',sans-serif; font-size:0.72rem; font-weight:700; color:rgba(255,255,255,0.6); text-decoration:none; padding:10px 16px; border-radius:40px; letter-spacing:2px; transition:all 0.25s; cursor:pointer; }
+.nav-link:hover,.nav-link.active { color:#fff; background:rgba(255,255,255,0.08); text-shadow:0 0 12px rgba(0,229,255,0.5); }
+
+/* Special ? Button styling */
+.nav-link.special { 
+  color:var(--holo); 
+  font-weight:900; 
+  font-size:1.2rem; 
+  text-shadow:0 0 8px var(--holo); 
+  padding: 8px 14px;
+}
+
+.nav-divider { width: 2px; height: 20px; background: rgba(255,255,255,0.2); margin: 0 8px; border-radius: 2px; }
+.nav-login { background:linear-gradient(135deg,var(--neon-green),#00cc44); color:#000!important; font-weight:900; box-shadow:0 0 20px rgba(57,255,20,0.3); }
+.nav-login:hover { box-shadow:0 0 40px rgba(57,255,20,0.7)!important; }
+
+/* Progress & Buttons */
+#progress-dots { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); display:flex; gap:8px; z-index:100; pointer-events:none; }
+.p-dot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.2); transition:all 0.4s; }
+.p-dot.active { background:var(--neon-green); box-shadow:0 0 8px var(--neon-green); width:20px; border-radius:3px; }
+
+.action-btn { font-family:'Share Tech Mono',monospace; font-size:1rem; font-weight:bold; letter-spacing:3px; color:rgba(255,255,255,0.8); background:rgba(0, 0, 0, 0.4); border:2px solid rgba(255,255,255,0.4); padding:10px 20px; border-radius:24px; cursor:pointer; transition:all 0.3s; z-index:200; pointer-events:all;}
+.action-btn:hover { color:var(--neon-green); border-color:var(--neon-green); background:rgba(57,255,20,0.1); box-shadow: 0 0 15px rgba(57,255,20,0.3); }
+
+#skip-btn { position:fixed; top:24px; right:30px; opacity:0; animation:fadeInBtn 1s 4s forwards; }
+@keyframes fadeInBtn { from{opacity:0} to{opacity:1} }
+
+#start-mission-btn { display:none; position:absolute; bottom:50px; left:50%; transform:translateX(-50%); font-family:'Orbitron',sans-serif; background:linear-gradient(135deg,var(--neon-green),#00cc44); color:#000; border:none; padding:16px 40px; border-radius:50px; box-shadow:0 0 30px rgba(57,255,20,0.5); animation:btnPulse 2s infinite; opacity:0; transition: opacity 1s; }
+#start-mission-btn:hover { box-shadow:0 0 50px rgba(57,255,20,0.8); transform:translateX(-50%) scale(1.05); }
+@keyframes btnPulse { 0%,100%{box-shadow:0 0 20px rgba(57,255,20,0.4)} 50%{box-shadow:0 0 40px rgba(57,255,20,0.8)} }
+</style>
+</head>
+<body>
+<div id="app">
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="purpleSuitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3d1163;stop-opacity:1" /> 
+      <stop offset="100%" style="stop-color:#6c268c;stop-opacity:1" />
+    </linearGradient>
+    <filter id="softBlueBlur"><feGaussianBlur stdDeviation="1.5" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <linearGradient id="ufoChassis" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#7f8c8d" /> <stop offset="40%" style="stop-color:#34495e" /> <stop offset="100%" style="stop-color:#2c3e50" />
+    </linearGradient>
+    <radialGradient id="bubbleGrad" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" style="stop-color:#ffffff; stop-opacity:0.1" /> <stop offset="70%" style="stop-color:#81ecec; stop-opacity:0.25" /> <stop offset="100%" style="stop-color:#00cec9; stop-opacity:0.5" />
+    </radialGradient>
+    <filter id="neonGlow"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <linearGradient id="purpleSuitBack" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2a0b45" /> <stop offset="100%" style="stop-color:#4d1b63" />
+    </linearGradient>
+    <radialGradient id="engineHeat" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#55efc4" /> <stop offset="100%" style="stop-color:#00cec9; stop-opacity:0" />
+    </radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+</svg>
+
+<div id="progress-dots">
+  <div class="p-dot active" id="dot-1"></div><div class="p-dot" id="dot-2"></div><div class="p-dot" id="dot-3"></div><div class="p-dot" id="dot-4"></div><div class="p-dot" id="dot-5"></div><div class="p-dot" id="dot-6"></div><div class="p-dot" id="dot-7"></div>
+</div>
+<button id="skip-btn" class="action-btn" onclick="skipToNav()">SKIP ▶▶</button>
+
+<div id="s1" class="scene active">
+  <div class="stars-bg" id="stars1"></div>
+  <div id="s1-ufo">
+    <div class="bubble" id="s1-bubble">Uhh... I am bored of my planet.<br>Let's explore others! 🚀</div>
+    <svg viewBox="0 0 400 350" xmlns="http://www.w3.org/2000/svg" class="ufo-rear-final" style="width:100%">
+      <ellipse cx="200" cy="210" rx="120" ry="45" fill="url(#engineHeat)" opacity="0.4" class="exhaust-pulse" />
+      <ellipse cx="200" cy="205" rx="150" ry="32" fill="#1e272e" />
+      <path d="M50,200 Q200,165 350,200 L340,215 Q200,245 60,215 Z" fill="#34495e" stroke="#1a252f" stroke-width="2" />
+      <g transform="translate(158, 72) scale(0.42)">
+          <g stroke="#1a062d" stroke-width="1.5">
+            <path d="M70,175 Q100,165 130,175 C145,205 145,230 130,254 Q100,264 70,254 C55,230 55,205 70,175 Z" fill="url(#purpleSuitBack)" />
+            <path d="M65,195 Q100,188 135,195" fill="none" stroke="#2ecc71" stroke-width="4" stroke-linecap="round" opacity="0.8" />
+            <path d="M60,210 Q100,203 140,210" fill="none" stroke="#2ecc71" stroke-width="4" stroke-linecap="round" opacity="0.8" />
+            <rect x="80" y="185" width="40" height="45" rx="5" fill="#2c3e50" stroke="#bdc3c7" stroke-width="1" />
+            <rect x="85" y="190" width="30" height="10" rx="2" fill="#2ecc71" opacity="0.4" />
+            <rect x="48" y="182" width="18" height="30" rx="9" fill="url(#purpleSuitBack)" transform="rotate(10, 48, 182)"/>
+            <rect x="134" y="182" width="18" height="30" rx="9" fill="url(#purpleSuitBack)" transform="rotate(-10, 134, 182)"/>
+          </g>
+          <path d="M100,40 Q160,40 160,105 Q160,170 100,170 Q40,170 40,105 Q40,40 100,40 Z" fill="#2D6A4F" stroke="#1B4332" stroke-width="4"/>
+          <g class="antennae-sway">
+            <path d="M78,45 Q65,10 50,20" fill="none" stroke="#1B4332" stroke-width="5" stroke-linecap="round" />
+            <circle cx="50" cy="20" r="6" fill="#2D6A4F" stroke="#1B4332" stroke-width="2" />
+            <path d="M122,45 Q135,10 150,20" fill="none" stroke="#1B4332" stroke-width="5" stroke-linecap="round" />
+            <circle cx="150" cy="20" r="6" fill="#2D6A4F" stroke="#1B4332" stroke-width="2" />
+          </g>
+      </g>
+      <path d="M125,190 C125,100 140,40 200,40 C260,40 275,100 275,190 Z" fill="rgba(129, 236, 236, 0.2)" stroke="#81ecec" stroke-width="1.5" />
+      <g filter="url(#glow)">
+        <circle cx="150" cy="212" r="6" fill="#55efc4" class="engine-strobe" />
+        <circle cx="200" cy="218" r="8" fill="#55efc4" class="engine-strobe" style="animation-delay: 0.3s" />
+        <circle cx="250" cy="212" r="6" fill="#55efc4" class="engine-strobe" style="animation-delay: 0.6s" />
+      </g>
+    </svg>
+  </div>
+</div>
+
+<div id="s2" class="scene">
+  <div id="warp-lines"></div>
+  <div id="s2-ufo">
+    <svg viewBox="0 0 400 350" xmlns="http://www.w3.org/2000/svg" class="ufo-final" style="width:100%">
+      <path d="M160,210 L120,340 L280,340 L240,210 Z" fill="#55efc4" opacity="0.1" />
+      <ellipse cx="200" cy="205" rx="140" ry="30" fill="#1e272e" />
+      <path d="M60,195 Q200,165 340,195 L350,210 Q200,240 50,210 Z" fill="url(#ufoChassis)" stroke="#1a252f" stroke-width="2" />
+      <rect x="130" y="202" width="20" height="4" rx="2" fill="#2ecc71" filter="url(#neonGlow)" class="strobe" />
+      <rect x="190" y="208" width="20" height="4" rx="2" fill="#2ecc71" filter="url(#neonGlow)" class="strobe" style="animation-delay: 0.3s" />
+      <rect x="250" y="202" width="20" height="4" rx="2" fill="#2ecc71" filter="url(#neonGlow)" class="strobe" style="animation-delay: 0.6s" />
+      <ellipse cx="200" cy="190" rx="75" ry="12" fill="#2d3436" />
+      <g transform="translate(158, 70) scale(0.42)">
+          <g stroke="#2c0c4a" stroke-width="1.2">
+            <path d="M70,175 Q100,165 130,175 C145,205 145,230 130,254 Q100,264 70,254 C55,230 55,205 70,175 Z" fill="url(#purpleSuitGrad)" stroke="#bdc3c7" stroke-width="2"/>
+            <path d="M75,190 Q100,185 125,190" fill="none" stroke="#2ecc71" stroke-width="4" stroke-linecap="round" />
+            <path d="M70,205 Q100,200 130,205" fill="none" stroke="#2ecc71" stroke-width="4" stroke-linecap="round" />
+            <circle cx="100" cy="225" r="14" fill="#3498DB" class="blue-core" />
+            <rect x="50" y="180" width="18" height="30" rx="9" fill="url(#purpleSuitGrad)" stroke="#bdc3c7" transform="rotate(15, 50, 180)"/>
+            <rect x="132" y="180" width="18" height="30" rx="9" fill="url(#purpleSuitGrad)" stroke="#bdc3c7" transform="rotate(-15, 150, 180)"/>
+            <ellipse cx="44" cy="220" rx="10" ry="15" fill="#2f3640" /> 
+            <ellipse cx="156" cy="220" rx="10" ry="15" fill="#2f3640" /> 
+          </g>
+          <path d="M100,40 Q160,40 160,105 Q160,170 100,170 Q40,170 40,105 Q40,40 100,40 Z" fill="#4ADE80" stroke="#2D6A4F" stroke-width="4"/>
+          <g class="eyes-anim">
+            <ellipse cx="72" cy="115" rx="17" ry="28" fill="black" transform="rotate(-12, 72, 115)" />
+            <ellipse cx="128" cy="115" rx="17" ry="28" fill="black" transform="rotate(12, 128, 115)" />
+            <circle cx="76" cy="105" r="4" fill="white" opacity="0.3" />
+          </g>
+          <g class="antennae">
+            <path d="M78,45 Q65,10 50,20" fill="none" stroke="#2D6A4F" stroke-width="4" stroke-linecap="round" />
+            <circle cx="50" cy="20" r="6" fill="#4ADE80" stroke="#2D6A4F" stroke-width="2" />
+            <path d="M122,45 Q135,10 150,20" fill="none" stroke="#2D6A4F" stroke-width="4" stroke-linecap="round" />
+            <circle cx="150" cy="20" r="6" fill="#4ADE80" stroke="#2D6A4F" stroke-width="2" />
+          </g>
+          <path d="M92,152 Q100,158 108,152" fill="none" stroke="#2D6A4F" stroke-width="3" stroke-linecap="round" />
+      </g>
+      <path d="M125,190 C125,100 140,40 200,40 C260,40 275,100 275,190 Z" fill="url(#bubbleGrad)" stroke="#81ecec" stroke-width="1.5" />
+      <path d="M125,190 Q200,205 275,190" fill="none" stroke="#2d3436" stroke-width="3" stroke-linecap="round" />
+    </svg>
+  </div>
+  <div id="warp-flash"></div>
+</div>
+
+<div id="s3" class="scene">
+  <div class="stars-bg" id="stars3"></div>
+  <div id="s3-ufo-wrap">
+    <div class="bubble" id="s3-bubble">This is Earth? It looks good...<br>Now where on Earth should I visit first?</div>
+    <div class="bubble" id="s3-bubble2">This is India? I've read so much about it!<br>Let's go there!</div>
+    <div id="s3-svg-holder"></div> </div>
+  <div class="earth-wrap">
+    <div class="scan-beam"></div>
+    <svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" style="width:min(280px,42vw)">
+      <defs>
+        <radialGradient id="eGr" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#4fc3f7"/><stop offset="30%" stop-color="#1565c0"/><stop offset="70%" stop-color="#0d47a1"/><stop offset="100%" stop-color="#01579b"/></radialGradient>
+        <radialGradient id="eGl" cx="50%" cy="50%" r="50%"><stop offset="70%" stop-color="transparent"/><stop offset="100%" stop-color="rgba(30,100,255,0.4)"/></radialGradient>
+        <clipPath id="eCl"><circle cx="160" cy="160" r="138"/></clipPath>
+      </defs>
+      <circle cx="160" cy="160" r="148" fill="none" stroke="rgba(80,150,255,0.3)" stroke-width="14"/>
+      <circle cx="160" cy="160" r="138" fill="url(#eGr)"/>
+      <g clip-path="url(#eCl)">
+        <path d="M60 80 Q80 60 120 70 Q140 90 130 120 Q110 150 80 145 Q50 130 60 80Z" fill="#2e7d32" opacity="0.85"/>
+        <path d="M90 165 Q115 155 125 180 Q130 220 110 250 Q85 260 75 230 Q70 195 90 165Z" fill="#388e3c" opacity="0.85"/>
+        <path d="M175 70 Q210 65 225 90 Q235 120 220 140 Q200 155 180 145 Q160 130 165 100 Q170 80 175 70Z" fill="#2e7d32" opacity="0.8"/>
+        <path d="M180 155 Q215 145 230 175 Q240 215 225 255 Q200 280 175 265 Q155 240 165 205 Q170 175 180 155Z" fill="#388e3c" opacity="0.85"/>
+        <path d="M220 60 Q270 50 290 80 Q305 110 290 135 Q260 155 230 145 Q215 125 220 90 Q222 70 220 60Z" fill="#2e7d32" opacity="0.8"/>
+        <path d="M245 140 Q265 135 270 160 Q268 190 255 210 Q240 215 235 190 Q232 165 245 140Z" fill="#66bb6a" opacity="0.95"><animate attributeName="opacity" values="0.8;1;0.8" dur="1.5s" repeatCount="indefinite"/></path>
+      </g>
+    </svg>
+    
+    <svg id="india-hologram" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="holoGradMap" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="rgba(0, 229, 255, 0.8)"/>
+          <stop offset="100%" stop-color="rgba(0, 100, 255, 0.2)"/>
+        </linearGradient>
+        <filter id="holoGlowMap">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+
+      <g filter="url(#holoGlowMap)">
+        <path d="M150,25 L160,15 L175,20 L180,35 L195,45 L205,60 L215,65 L225,75 L240,75 L250,85 L250,95 L270,105 L285,100 L305,105 L315,120 L305,145 L285,145 L275,135 L265,145 L255,160 L240,190 L220,230 L205,270 L185,320 L170,340 L155,320 L135,270 L115,220 L95,190 L65,195 L40,180 L45,155 L65,145 L85,155 L95,140 L90,115 L110,110 L125,120 L135,95 L125,75 L135,60 Z" 
+              fill="rgba(0, 60, 150, 0.8)" stroke="#0088cc" stroke-width="2" transform="translate(4, 6)"/>
+        
+        <path d="M150,25 L160,15 L175,20 L180,35 L195,45 L205,60 L215,65 L225,75 L240,75 L250,85 L250,95 L270,105 L285,100 L305,105 L315,120 L305,145 L285,145 L275,135 L265,145 L255,160 L240,190 L220,230 L205,270 L185,320 L170,340 L155,320 L135,270 L115,220 L95,190 L65,195 L40,180 L45,155 L65,145 L85,155 L95,140 L90,115 L110,110 L125,120 L135,95 L125,75 L135,60 Z" 
+              fill="url(#holoGradMap)" stroke="#00ffff" stroke-width="2.5"/>
+      </g>
+
+      <path d="M150,80 L180,120 L210,110 M180,120 L170,180 L220,180 L240,150 M170,180 L140,230 L180,260 L200,210 M180,260 L170,310 M110,150 L140,160 L130,200 M220,180 L260,200 M140,230 L115,220 M180,120 L125,120 M200,210 L220,230" 
+            stroke="rgba(255, 255, 255, 0.45)" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/>
+            
+      <circle cx="180" cy="120" r="3.5" fill="#fff" filter="url(#holoGlowMap)"/>
+      <circle cx="170" cy="180" r="3.5" fill="#fff" filter="url(#holoGlowMap)"/>
+      <circle cx="140" cy="230" r="3.5" fill="#fff" filter="url(#holoGlowMap)"/>
+      <circle cx="180" cy="260" r="3.5" fill="#fff" filter="url(#holoGlowMap)"/>
+      <circle cx="220" cy="180" r="3.5" fill="#fff" filter="url(#holoGlowMap)"/>
+    </svg>
+
+    <div class="hacker-text">
+      <span>[COORD_LAT: 20.59]</span><span>[COORD_LONG: 78.96]</span><span>[TARGET: BHARAT]</span><span>[LIFE_FORMS: 1.4B]</span><span>[CULTURE_INDEX: ★★★★★]</span>
+    </div>
+  </div>
+</div>
+
+<div id="s4" class="scene">
+  <div id="s4-ufo-container">
+    <div id="s4-ufo"></div>
+    <div class="abduction-beam"></div>
+  </div>
+  
+  <div class="landmark-carousel" id="carousel">
+    <div class="lm-slide">
+      <div class="lm-label">◉ INDIA GATE · NEW DELHI</div>
+      <svg class="landmark-svg" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+        <rect x="80" y="270" width="240" height="20" fill="#a05a2c"/>
+        <rect x="90" y="260" width="220" height="10" fill="#b86b35"/>
+        <rect x="110" y="100" width="50" height="160" fill="#d4800a"/>
+        <rect x="240" y="100" width="50" height="160" fill="#d4800a"/>
+        <path d="M160,260 L160,160 A40,40 0 0,1 240,160 L240,260 Z" fill="#8a4a1c"/>
+        <rect x="100" y="70" width="200" height="30" fill="#c07020"/>
+        <rect x="110" y="50" width="180" height="20" fill="#a05a2c"/>
+        <path d="M160,50 Q200,10 240,50 Z" fill="#d4800a"/>
+      </svg>
+    </div>
+    
+    <div class="lm-slide">
+      <div class="lm-label">◉ GATEWAY OF INDIA · MUMBAI</div>
+      <svg class="landmark-svg" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+        <rect x="50" y="270" width="300" height="15" fill="#a88b3e"/>
+        <rect x="70" y="120" width="260" height="150" fill="#c9a94c"/>
+        <path d="M150,270 L150,190 A50,50 0 0,1 250,190 L250,270 Z" fill="#2c3e50"/>
+        <path d="M90,270 L90,210 A20,20 0 0,1 130,210 L130,270 Z" fill="#2c3e50"/>
+        <path d="M270,270 L270,210 A20,20 0 0,1 310,210 L310,270 Z" fill="#2c3e50"/>
+        <rect x="60" y="100" width="40" height="30" fill="#b0923e"/>
+        <rect x="300" y="100" width="40" height="30" fill="#b0923e"/>
+        <path d="M60,100 L80,60 L100,100 Z" fill="#c9a94c"/>
+        <path d="M300,100 L320,60 L340,100 Z" fill="#c9a94c"/>
+        <rect x="120" y="100" width="160" height="20" fill="#a88b3e"/>
+        <rect x="140" y="80" width="120" height="20" fill="#c9a94c"/>
+      </svg>
+    </div>
+    
+    <div class="lm-slide">
+      <div class="lm-label">◉ RAM MANDIR · AYODHYA</div>
+      <svg class="landmark-svg" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+        <rect x="40" y="270" width="320" height="15" fill="#d49a35"/>
+        <rect x="60" y="255" width="280" height="15" fill="#e5aa45"/>
+        <rect x="80" y="240" width="240" height="15" fill="#f5c842"/>
+        <rect x="100" y="180" width="200" height="60" fill="#f5c842"/>
+        <rect x="110" y="180" width="15" height="60" fill="#d49a35"/>
+        <rect x="150" y="180" width="15" height="60" fill="#d49a35"/>
+        <rect x="235" y="180" width="15" height="60" fill="#d49a35"/>
+        <rect x="275" y="180" width="15" height="60" fill="#d49a35"/>
+        <polygon points="200,40 260,180 140,180" fill="#e5aa45"/>
+        <polygon points="120,120 160,180 80,180" fill="#f5c842"/>
+        <polygon points="280,120 320,180 240,180" fill="#f5c842"/>
+        <line x1="200" y1="40" x2="200" y2="10" stroke="#d49a35" stroke-width="3"/>
+        <polygon points="200,10 230,20 200,30" fill="#e74c3c"/>
+      </svg>
+    </div>
+    
+    <div class="lm-slide">
+      <div class="lm-label">◉ CHARMINAR · HYDERABAD</div>
+      <svg class="landmark-svg" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+        <rect x="70" y="270" width="260" height="15" fill="#805a15"/>
+        <rect x="120" y="150" width="160" height="120" fill="#a88032"/>
+        <path d="M150,270 L150,200 A50,50 0 0,1 250,200 L250,270 Z" fill="#2c3e50"/>
+        <rect x="90" y="80" width="40" height="190" fill="#9b6b1a"/>
+        <rect x="85" y="150" width="50" height="15" fill="#805a15"/>
+        <rect x="85" y="90" width="50" height="15" fill="#805a15"/>
+        <rect x="270" y="80" width="40" height="190" fill="#9b6b1a"/>
+        <rect x="265" y="150" width="50" height="15" fill="#805a15"/>
+        <rect x="265" y="90" width="50" height="15" fill="#805a15"/>
+        <path d="M90,80 Q110,30 130,80 Z" fill="#a88032"/>
+        <path d="M270,80 Q290,30 310,80 Z" fill="#a88032"/>
+        <rect x="130" y="130" width="140" height="20" fill="#805a15"/>
+        <rect x="140" y="110" width="120" height="20" fill="#9b6b1a"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div id="s5" class="scene">
+  <div class="red-border-flash"></div>
+  <div class="overload-text">⚠ SYSTEM OVERLOAD ⚠</div>
+  <div id="smoke-container" style="position:absolute;inset:0;pointer-events:none;z-index:15;overflow:hidden"></div>
+  <div id="s5-ufo"></div> 
+  <div class="scream-bubble" id="s5-scream">AAAAAAAAHH!! HELP ME!!</div>
+</div>
+
+<div id="s6" class="scene">
+  <div class="stars-bg" id="stars6"></div>
+  <div class="city-skyline">
+    <svg preserveAspectRatio="none" viewBox="0 0 1000 200" style="width:100%; height:100%; fill:#1a0f35;">
+       <path d="M0,200 L0,100 L30,100 L30,50 L70,50 L70,120 L110,120 L110,80 L140,80 L140,20 L180,20 L180,90 L230,90 L230,60 L280,60 L280,140 L320,140 L320,40 L370,40 L370,110 L410,110 L410,70 L460,70 L460,130 L520,130 L520,30 L570,30 L570,100 L620,100 L620,50 L680,50 L680,120 L730,120 L730,80 L790,80 L790,20 L840,20 L840,90 L890,90 L890,60 L950,60 L950,140 L1000,140 L1000,200 Z" />
+    </svg>
+  </div>
+  <div class="ground-layer"></div>
+  <div class="debris-piece" style="left:8%;width:90px;--r:-22deg"></div>
+  <div class="debris-piece" style="left:18%;width:55px;--r:15deg;background:linear-gradient(135deg,#6c268c,#3d1163)"></div>
+  <div class="debris-piece" style="right:12%;width:70px;--r:28deg"></div>
+  <div class="debris-piece" style="right:24%;width:100px;height:9px;--r:-8deg;background:linear-gradient(135deg,#9b6b20,#3d2200)"></div>
+  <div class="debris-piece" style="left:42%;width:120px;--r:4deg;height:8px"></div>
+  
+  <div id="s6-dialogue-container">
+    <div class="bubble s6-alien-talk" id="ab1">Ouch! That was rough... 😰<br>How do I search for my spaceship, SmartWatchGPT?</div>
+    <div class="bubble watch-bubble s6-watch-talk" id="wb1">You can get yourself a vehicle to<br>search for the spaceship.</div>
+    <div class="bubble s6-alien-talk" id="ab2">How do I get a vehicle, though?</div>
+    <div class="bubble watch-bubble s6-watch-talk" id="wb2">To legally get a vehicle, you need to learn<br>the Traffic Rules and get a License!</div>
+    <div class="bubble s6-alien-talk" id="ab3">A License?<br>Then let's learn whatever necessary to find my spaceship!</div>
+  </div>
+
+  <div id="alien-king-final">
+    <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" style="display:block; width:100%; height:100%;">
+      <g class="cute-space-suit" stroke="#2c0c4a" stroke-width="1.2">
+        <path d="M70,175 Q100,165 130,175 C145,205 145,230 130,254 Q100,264 70,254 C55,230 55,205 70,175 Z" fill="url(#purpleSuitGrad)" stroke="#bdc3c7" stroke-width="1.5"/>
+        <path d="M75,190 Q100,185 125,190" fill="none" stroke="#2ecc71" stroke-width="3" stroke-linecap="round" />
+        <path d="M70,205 Q100,200 130,205" fill="none" stroke="#2ecc71" stroke-width="3" stroke-linecap="round" />
+        <circle cx="100" cy="225" r="14" fill="#3498DB" filter="url(#softBlueBlur)" stroke="#2980B9" stroke-width="1" />
+        <rect x="50" y="180" width="18" height="30" rx="9" fill="url(#purpleSuitGrad)" stroke="#bdc3c7" transform="rotate(15, 50, 180)"/>
+        <g transform="rotate(-15, 150, 180)">
+          <rect x="132" y="180" width="18" height="30" rx="9" fill="url(#purpleSuitGrad)" stroke="#bdc3c7" />
+          <rect x="130" y="192" width="22" height="15" rx="2" fill="#ff4500" stroke="none" />
+          <rect x="133" y="194.5" width="16" height="10" rx="2" fill="#000" stroke="none" />
+          <polyline points="141,196 141,199.5 145,199.5" fill="none" stroke="#ff4500" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </g>
+
+        <ellipse cx="44" cy="220" rx="9" ry="14" fill="#2f3640" stroke="#1A252F"/> 
+        <ellipse cx="156" cy="220" rx="9" ry="14" fill="#2f3640" stroke="#1A252F"/> 
+        
+        <g class="legs-group">
+          <rect x="65" y="255" width="28" height="28" rx="10" fill="url(#purpleSuitGrad)" stroke="#bdc3c7" />
+          <rect x="107" y="255" width="28" height="28" rx="10" fill="url(#purpleSuitGrad)" stroke="#bdc3c7" />
+          <path d="M68,269 L90,269" fill="none" stroke="#2ecc71" stroke-width="2.5" stroke-linecap="round" />
+          <path d="M110,269 L132,269" fill="none" stroke="#2ecc71" stroke-width="2.5" stroke-linecap="round" />
+          <rect x="62" y="280" width="34" height="15" rx="7" fill="#2f3640" />
+          <rect x="104" y="280" width="34" height="15" rx="7" fill="#2f3640" />
+        </g>
+      </g>
+      <path d="M100,40 Q160,40 160,105 Q160,170 100,170 Q40,170 40,105 Q40,40 100,40 Z" fill="#4ADE80" stroke="#2D6A4F" stroke-width="2.5"/>
+      <g class="eyes-anim">
+        <ellipse cx="72" cy="115" rx="17" ry="28" fill="black" transform="rotate(-12, 72, 115)" />
+        <ellipse cx="128" cy="115" rx="17" ry="28" fill="black" transform="rotate(12, 128, 115)" />
+        <circle cx="76" cy="105" r="4" fill="white" opacity="0.3" />
+        <circle cx="124" cy="105" r="4" fill="white" opacity="0.3" />
+      </g>
+      <g class="antennae">
+        <path d="M78,45 Q65,10 50,20" fill="none" stroke="#2D6A4F" stroke-width="3" stroke-linecap="round" />
+        <circle cx="50" cy="20" r="5" fill="#4ADE80" stroke="#2D6A4F" stroke-width="2" />
+        <path d="M122,45 Q135,10 150,20" fill="none" stroke="#2D6A4F" stroke-width="3" stroke-linecap="round" />
+        <circle cx="150" cy="20" r="5" fill="#4ADE80" stroke="#2D6A4F" stroke-width="2" />
+      </g>
+      <path d="M92,154 Q100,146 108,154" fill="none" stroke="#2D6A4F" stroke-width="2.5" stroke-linecap="round" />
+    </svg>
+  </div>
+  
+  <button id="start-mission-btn" class="action-btn" onclick="skipToNav()">START LEARNING ▶</button>
+</div>
+
+<div id="s7" class="scene">
+  <div class="nav-stars-bg" id="navStars"></div>
+  <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center">
+    <div class="nav-mascot">
+      <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" style="width:90px">
+        <g class="cute-space-suit" stroke="#2c0c4a" stroke-width="1.2">
+          <path d="M70,175 Q100,165 130,175 C145,205 145,230 130,254 Q100,264 70,254 C55,230 55,205 70,175 Z" fill="url(#purpleSuitGrad)" stroke="#bdc3c7" stroke-width="1.5"/>
+          <path d="M75,190 Q100,185 125,190" fill="none" stroke="#2ecc71" stroke-width="3" stroke-linecap="round" />
+          <path d="M70,205 Q100,200 130,205" fill="none" stroke="#2ecc71" stroke-width="3" stroke-linecap="round" />
+          <circle cx="100" cy="225" r="14" fill="#3498DB" filter="url(#softBlueBlur)" stroke="#2980B9" stroke-width="1" />
+          <rect x="50" y="180" width="18" height="30" rx="9" fill="url(#purpleSuitGrad)" stroke="#bdc3c7" transform="rotate(15, 50, 180)"/>
+          <g transform="rotate(-15, 150, 180)">
+            <rect x="132" y="180" width="18" height="30" rx="9" fill="url(#purpleSuitGrad)" stroke="#bdc3c7" />
+            <rect x="130" y="192" width="22" height="15" rx="2" fill="#ff4500" stroke="none" />
+            <rect x="133" y="194.5" width="16" height="10" rx="2" fill="#000" stroke="none" />
+            <polyline points="141,196 141,199.5 145,199.5" fill="none" stroke="#ff4500" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </g>
+          <ellipse cx="44" cy="220" rx="9" ry="14" fill="#2f3640" stroke="#1A252F"/> 
+          <ellipse cx="156" cy="220" rx="9" ry="14" fill="#2f3640" stroke="#1A252F"/> 
+          <g class="legs-group">
+            <rect x="65" y="255" width="28" height="28" rx="10" fill="url(#purpleSuitGrad)" stroke="#bdc3c7" />
+            <rect x="107" y="255" width="28" height="28" rx="10" fill="url(#purpleSuitGrad)" stroke="#bdc3c7" />
+            <path d="M68,269 L90,269" fill="none" stroke="#2ecc71" stroke-width="2.5" stroke-linecap="round" />
+            <path d="M110,269 L132,269" fill="none" stroke="#2ecc71" stroke-width="2.5" stroke-linecap="round" />
+            <rect x="62" y="280" width="34" height="15" rx="7" fill="#2f3640" />
+            <rect x="104" y="280" width="34" height="15" rx="7" fill="#2f3640" />
+          </g>
+        </g>
+        <path d="M100,40 Q160,40 160,105 Q160,170 100,170 Q40,170 40,105 Q40,40 100,40 Z" fill="#4ADE80" stroke="#2D6A4F" stroke-width="2.5"/>
+        <g class="eyes-anim">
+          <ellipse cx="72" cy="115" rx="17" ry="28" fill="black" transform="rotate(-12, 72, 115)" />
+          <ellipse cx="128" cy="115" rx="17" ry="28" fill="black" transform="rotate(12, 128, 115)" />
+          <circle cx="76" cy="105" r="4" fill="white" opacity="0.3" />
+          <circle cx="124" cy="105" r="4" fill="white" opacity="0.3" />
+        </g>
+        <g class="antennae">
+          <path d="M78,45 Q65,10 50,20" fill="none" stroke="#2D6A4F" stroke-width="3" stroke-linecap="round" />
+          <circle cx="50" cy="20" r="5" fill="#4ADE80" stroke="#2D6A4F" stroke-width="2" />
+          <path d="M122,45 Q135,10 150,20" fill="none" stroke="#2D6A4F" stroke-width="3" stroke-linecap="round" />
+          <circle cx="150" cy="20" r="5" fill="#4ADE80" stroke="#2D6A4F" stroke-width="2" />
+        </g>
+        <path d="M92,154 Q100,146 108,154" fill="none" stroke="#2D6A4F" stroke-width="2.5" stroke-linecap="round" />
+      </svg>
+    </div>
+    <div class="nav-logo">ALIEN KING</div>
+    <div class="nav-tagline">// GALACTIC LEARNING PORTAL //</div>
+    <nav>
+      <a class="nav-link active" href="#">Home</a>
+      <a class="nav-link" href="#">Learn Rules</a>
+      <a class="nav-link" href="#">Take Test</a>
+      <a class="nav-link" href="#">License Status</a>
+      <div class="nav-divider"></div>
+      <a class="nav-link special" href="#" title="About the Team" style="font-weight:900; font-size:1.2rem; padding: 10px 12px;">?</a>
+      <a class="nav-link" href="#">Profile</a>
+      <a class="nav-link nav-login" href="#">Log In</a>
+    </nav>
+  </div>
+</div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// Duplicate the Front Pose UFO SVG for scenes 3, 4, 5
+const frontUfoSVG = $('s2-ufo').innerHTML;
+$('s3-svg-holder').innerHTML = frontUfoSVG;
+$('s4-ufo').innerHTML = frontUfoSVG;
+$('s5-ufo').innerHTML = frontUfoSVG;
+
+// ─── Scene switcher ──────────────────────────────────────────
+function setScene(id) {
+  document.querySelectorAll('.scene').forEach(s => { s.classList.remove('active'); s.style.opacity = ''; s.style.pointerEvents = ''; });
+  $(id).classList.add('active');
+  const n = parseInt(id.replace('s',''));
+  document.querySelectorAll('.p-dot').forEach((d,i) => d.classList.toggle('active', i+1 === n));
+}
+
+// ─── Elements Builder ────────────────────────────────────────
+function buildStars(id, count) {
+  const c = $(id); if(!c) return;
+  for(let i=0;i<count;i++){
+    const s=document.createElement('div'); s.className='star-dot';
+    const sz=Math.random()*2.5+0.5;
+    s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-duration:${Math.random()*4+2}s;animation-delay:${Math.random()*4}s;`;
+    c.appendChild(s);
+  }
+}
+function buildNavStars(){
+  const c=$('navStars');
+  for(let i=0;i<220;i++){
+    const s=document.createElement('div'); s.className='nav-star';
+    const sz=Math.random()*2+0.4;
+    s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-duration:${Math.random()*5+2}s;animation-delay:${Math.random()*5}s;`;
+    c.appendChild(s);
+  }
+}
+function buildWarpLines(){
+  const c=$('warp-lines'); c.innerHTML='';
+  for(let i=0;i<80;i++){
+    const l=document.createElement('div'); l.className='warp-line';
+    l.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;transform:rotate(${Math.random()*360}deg);animation-duration:${Math.random()*0.4+0.2}s;animation-delay:${Math.random()*0.5}s;`;
+    c.appendChild(l);
+  }
+}
+function buildSmoke(){
+  const c=$('smoke-container'); c.innerHTML='';
+  const pts=[{l:'5%',b:'0'},{l:'15%',b:'0'},{r:'5%',b:'0'},{r:'18%',b:'0'},{l:'40%',b:'0'},{l:'55%',b:'0'},{l:'30%',t:'55%'},{r:'30%',t:'40%'},{l:'50%',t:'25%'}];
+  pts.forEach((p,i)=>{
+    const d=document.createElement('div'); d.className='smoke-cloud';
+    const sz=80+Math.random()*120;
+    let css=`width:${sz}px;height:${sz}px;animation-duration:${1.4+Math.random()*0.8}s;animation-delay:${i*0.12}s;`;
+    if(p.l) css+=`left:${p.l};`; if(p.r) css+=`right:${p.r};`; if(p.b!==undefined) css+=`bottom:${p.b};`; if(p.t) css+=`top:${p.t};`;
+    d.style.cssText=css; c.appendChild(d);
+  });
+}
+
+// ─── Carousel ────────────────────────────────────────────────
+let cIdx=0;
+function advCarousel(){ if(cIdx<3){ cIdx++; $('carousel').style.transform=`translateX(-${cIdx*25}%)`; } }
+
+// ─── Play Scene 6 Dialogue ───────────────────────────────────
+function playCrashDialogue() {
+  const t = (id, delay) => setTimeout(() => $(id).classList.add('active'), delay);
+  const h = (id, delay) => setTimeout(() => $(id).classList.remove('active'), delay);
+
+  // Timing: Start at 1.5s -> 5s -> 8.5s -> 11.5s -> 16s
+  t('ab1', 1500); h('ab1', 4800);
+  t('wb1', 5000); h('wb1', 8300);
+  t('ab2', 8500); h('ab2', 11300);
+  t('wb2', 11500); h('wb2', 15800);
+  t('ab3', 16000); 
+
+  // Show Start Button at 20s
+  setTimeout(() => {
+    $('start-mission-btn').style.display = 'block';
+    setTimeout(() => $('start-mission-btn').style.opacity = '1', 50);
+  }, 20000);
+}
+
+// ─── Main Sequence ─────────────────────────────────────────
+function startSequence(){
+  setScene('s1');
+  setTimeout(()=>$('s1-bubble').classList.add('active'), 2000);
+
+  setTimeout(()=>{
+    buildWarpLines(); setScene('s2');
+    setTimeout(()=>{
+      $('warp-flash').classList.add('on');
+      setTimeout(()=>{
+        $('warp-flash').classList.remove('on');
+        setScene('s3');
+        
+        // Scene 3 Frame 1: First dialogue
+        setTimeout(()=>$('s3-bubble').classList.add('active'), 1000);
+        
+        // Scene 3 Frame 2: Switch dialogue and show India map
+        setTimeout(()=>{
+          $('s3-bubble').classList.remove('active');
+          $('s3-bubble').style.opacity = '0'; // force hide instantly
+          
+          $('s3-bubble2').classList.add('active');
+          $('india-hologram').classList.add('active');
+        }, 4500);
+
+        // Move to Scene 4
+        setTimeout(()=>{
+          cIdx=0; $('carousel').style.transform='translateX(0)';
+          setScene('s4');
+          setTimeout(()=>advCarousel(), 2500);
+          setTimeout(()=>advCarousel(), 5000);
+          setTimeout(()=>advCarousel(), 7500);
+
+          setTimeout(()=>{
+            setScene('s5');
+            $('s5').classList.add('shake');
+            $('s5-ufo').style.animation='s5shake 0.1s ease-in-out infinite';
+            buildSmoke();
+            setTimeout(()=>$('s5-scream').classList.add('active'), 500);
+
+            setTimeout(()=>{
+              $('s5').classList.remove('shake');
+              $('s5-ufo').style.animation='';
+              $('s5-scream').classList.remove('active');
+              setScene('s6');
+              playCrashDialogue(); // Start the dialogue sequence
+            }, 3500);
+          }, 10000);
+        }, 8500);
+      }, 400);
+    }, 2000);
+  }, 5000);
+}
+
+// ─── Navigation ──────────────────────────────────────────────
+function skipToNav(){
+  setScene('s7');
+  $('progress-dots').style.display='none';
+  $('skip-btn').style.display='none';
+}
+
+// ─── Init ────────────────────────────────────────────────────
+buildStars('stars1',120); buildStars('stars3',150); buildStars('stars6',80); buildNavStars();
+startSequence();
+</script>
+</body>
+</html>
